@@ -19,11 +19,11 @@ setup(
     name="popx-tools",
     version="1.0.0",
     author="Rinkokawa",
-    author_email="your-email@example.com",  # 请替换为您的邮箱
+    author_email="rin@rinco.cc",  # 请替换为您的邮箱
     description="Popx 环境部署 CLI 工具集",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/popx-tools",  # 请替换为您的仓库地址
+    url="https://github.com/RinKokawa/popx-tools",  # 请替换为您的仓库地址
     packages=find_packages(),
     include_package_data=True,
     package_data={
