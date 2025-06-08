@@ -6,7 +6,13 @@ import subprocess
 from importlib.resources import files
 from pathlib import Path
 
+app = typer.Typer()
+
+@app.command("install-nvm")
 def install_nvm():
+    """
+    在线下载并安装 nvm，失败则回退使用内置安装器。
+    """
     url = "https://github.com/coreybutler/nvm-windows/releases/latest/download/nvm-setup.exe"
     temp_path = os.path.join(os.environ["TEMP"], "nvm-setup.exe")
     typer.echo("🔽 正在尝试从 GitHub 下载 nvm 安装程序...")
@@ -29,18 +35,27 @@ def install_nvm():
     except Exception as e:
         typer.echo(f"❌ 下载失败: {e}")
         typer.echo("👉 正在尝试使用内置安装包继续安装...")
+        install_nvm_local()
 
-        try:
-            # 假设内置文件放在 install/bin/nvm-setup.exe 并打包进 PyPI
-            resource = files("install.bin").joinpath("nvm-setup.exe")
-            fallback_path = Path(os.environ["TEMP"]) / "nvm-setup-fallback.exe"
 
-            with resource.open("rb") as src, open(fallback_path, "wb") as dst:
-                dst.write(src.read())
+@app.command("install-nvm-local")
+def install_nvm_local():
+    """
+    直接使用内置 nvm 安装器安装。
+    """
+    try:
+        resource = files("install.bin").joinpath("nvm-setup.exe")
+        fallback_path = Path(os.environ["TEMP"]) / "nvm-setup-fallback.exe"
 
-            typer.echo("✅ 内置安装包已准备，启动安装程序...")
-            subprocess.Popen([str(fallback_path)], shell=True)
+        with resource.open("rb") as src, open(fallback_path, "wb") as dst:
+            dst.write(src.read())
 
-        except Exception as fallback_error:
-            typer.echo(f"❌ 内置安装也失败了: {fallback_error}")
-            typer.echo("👉 手动下载地址：https://github.com/coreybutler/nvm-windows/releases")
+        typer.echo("✅ 内置安装包已准备，启动安装程序...")
+        subprocess.Popen([str(fallback_path)], shell=True)
+
+    except Exception as fallback_error:
+        typer.echo(f"❌ 内置安装也失败了: {fallback_error}")
+        typer.echo("👉 手动下载地址：https://github.com/coreybutler/nvm-windows/releases")
+
+if __name__ == "__main__":
+    app()
