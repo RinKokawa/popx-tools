@@ -30,6 +30,7 @@ def install_nvm():
                         bar.update(len(chunk))
 
         typer.echo("✅ 下载完成，启动安装程序...")
+        typer.echo("✅ 全部执行下一步即可。")
         subprocess.Popen([temp_path], shell=True)
 
     except Exception as e:
@@ -51,6 +52,7 @@ def install_nvm_local():
             dst.write(src.read())
 
         typer.echo("✅ 内置安装包已准备，启动安装程序...")
+        typer.echo("✅ 全部执行下一步即可。")
         subprocess.Popen([str(fallback_path)], shell=True)
 
     except Exception as fallback_error:
