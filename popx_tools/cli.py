@@ -1,9 +1,9 @@
 import typer
 import sys
 from typing import List, Optional
-from install import install_app
-from uninstall import uninstall_app
-from ui import ui_app
+from .install import install_app
+from .uninstall import uninstall_app
+from .ui import ui_app
 
 app = typer.Typer(help="Popx 环境部署 CLI 工具", no_args_is_help=True)
 

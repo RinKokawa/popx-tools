@@ -17,7 +17,7 @@ def get_bin_files():
 
 setup(
     name="popx-tools",
-    version="1.0.1",
+    version="1.0.2",
     author="Rinkokawa",
     author_email="rin@rinco.cc",  # 请替换为您的邮箱
     description="Popx 环境部署 CLI 工具集",
