@@ -1,6 +1,66 @@
-install/__pycache__/__init__.cpython-313.pyc
-install/__pycache__/laya.cpython-313.pyc
-install/__pycache__/node.cpython-313.pyc
-install/__pycache__/npm.cpython-313.pyc
-install/__pycache__/popxcmd.cpython-313.pyc
-install/__pycache__/nvm.cpython-313.pyc
+# === Python 缓存 ===
+__pycache__/
+*.py[cod]
+*$py.class
+
+# === 环境配置文件 ===
+.env
+.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# === 编辑器/IDE ===
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# === pip 安装日志 ===
+pip-log.txt
+pip-delete-this-directory.txt
+
+# === PyInstaller ===
+*.spec
+dist/
+build/
+
+# === tox / test ===
+.tox/
+.nox/
+.coverage
+coverage.xml
+*.cover
+.cache/
+nosetests.xml
+test-results/
+htmlcov/
+
+# === Jupyter Notebook 检查点 ===
+.ipynb_checkpoints/
+
+# === mypy / pylint / typing 缓存 ===
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+
+# === VSCode python 项目缓存 ===
+.pytest_cache/
+
+# === 本地数据库和日志文件 ===
+*.sqlite3
+*.log
+
+# === OS 系统文件 ===
+.DS_Store
+Thumbs.db
+
+# === pyenv / poetry / pipenv ===
+.python-version
+poetry.lock
+Pipfile.lock
+
+# === 本地部署相关 ===
+__pypackages__/

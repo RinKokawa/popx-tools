@@ -3,7 +3,7 @@ import os
 import shutil
 from pathlib import Path
 
-app = typer.Typer(help="卸载所有已安装组件")
+uninstall_app = typer.Typer(help="卸载所有已安装组件", no_args_is_help=True)
 
 USER_HOME = Path(os.environ["USERPROFILE"])
 NVM_DIR = USER_HOME / "AppData" / "Local" / "nvm"
@@ -16,7 +16,7 @@ NPM_POWERSHELL_PATHS = [
 ]
 SETTINGS_FILE = NVM_DIR / "settings.txt"
 
-@app.command("all")
+@uninstall_app.command("all")
 def uninstall_all():
     """
     卸载 nvm、node、npm 相关安装内容
@@ -57,3 +57,6 @@ def uninstall_all():
             typer.secho("⚠️ 无法删除 nvm.exe，可能在使用中", fg=typer.colors.YELLOW)
 
     typer.secho("✅ 卸载完成。建议手动检查路径是否清理干净。", fg=typer.colors.GREEN)
+
+# 确保 uninstall_app 被模块导出
+__all__ = ["uninstall_app"] 
