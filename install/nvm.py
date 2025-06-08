@@ -45,14 +45,19 @@ def install_nvm():
     """
     自动检测并安装 nvm（默认使用内置安装器）。
     """
+    typer.echo(f"🔍 正在检查 nvm 安装状态...")
+    typer.echo(f"📂 默认 nvm 路径为：{NVM_DIR}")
+
     if is_nvm_available():
         typer.echo("✅ 已检测到 nvm 命令可用，无需安装。")
+        typer.echo(f"📍 nvm 当前已在 PATH 中，默认目录：{NVM_DIR}")
         return
 
     if NVM_EXE.exists():
-        typer.echo("🔍 检测到本地存在 nvm.exe，但未加入 PATH，正在修复...")
+        typer.echo("🛠️ 检测到本地存在 nvm.exe，但未加入 PATH，正在修复...")
         write_path_env()
         typer.echo("✅ 修复完成，请重新打开终端后再试。")
+        typer.echo(f"📍 nvm 安装目录：{NVM_DIR}")
         return
 
     # 改为本地安装器
@@ -62,13 +67,12 @@ def install_nvm():
         with LOCAL_INSTALLER.open("rb") as src, open(fallback_path, "wb") as dst:
             dst.write(src.read())
 
-        typer.echo("✅ 本地安装器已准备，启动安装程序...")
+        typer.echo(f"✅ 本地安装器已准备，启动安装程序...\n📁 路径：{fallback_path}")
         subprocess.Popen([str(fallback_path)], shell=True)
 
     except Exception as fallback_error:
         typer.secho(f"❌ 启动本地安装失败: {fallback_error}", fg=typer.colors.RED)
         typer.echo("👉 请确认 install/bin/nvm-setup.exe 是否存在。")
-
 
 if __name__ == "__main__":
     app()
