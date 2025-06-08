@@ -10,6 +10,25 @@ def laya_cmd():
     laya.install_laya()
 
 
+@install_app.command("all")
+def install_all():
+    """
+    一键安装 nvm + node + npm（离线优先）
+    """
+    from . import nvm, node, npm
+
+    typer.echo("🚀 开始一键安装所有组件（nvm → node → npm）")
+    
+    # 顺序安装
+    try:
+        nvm.install_nvm()
+        node.install_node()
+        npm.install_npm()
+        typer.secho("🎉 全部安装完成！", fg=typer.colors.GREEN)
+    except Exception as e:
+        typer.secho(f"❌ 安装过程中出错: {e}", fg=typer.colors.RED)
+
+
 @install_app.command("nvm")
 def nvm_cmd():
     """安装 nvm"""
