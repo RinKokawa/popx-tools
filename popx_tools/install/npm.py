@@ -11,8 +11,7 @@ app = typer.Typer()
 # 配置
 NPM_VERSION = "6.14.12"
 TAR_NAME = f"npm-{NPM_VERSION}.tgz"
-PROJECT_ROOT = Path(sys.argv[0]).resolve().parent
-TAR_PATH = PROJECT_ROOT / "install" / "bin" / TAR_NAME
+TAR_PATH = Path(__file__).parent / "bin" / TAR_NAME
 EXTRACT_PATH = Path(os.environ["TEMP"]) / "npm-local-install"
 
 
@@ -25,7 +24,6 @@ def install_npm():
     """
     离线安装本地 npm（v6.14.12），不联网拉取。
     """
-    typer.echo(f"📁 当前项目目录：{PROJECT_ROOT}")
     typer.echo(f"📦 安装包路径: {TAR_PATH}")
     if not TAR_PATH.exists():
         typer.secho(f"❌ 缺少 npm 包: {TAR_PATH}", fg=typer.colors.RED)

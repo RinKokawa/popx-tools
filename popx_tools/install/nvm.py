@@ -10,7 +10,7 @@ app = typer.Typer()
 NVM_DIR = Path(os.environ["USERPROFILE"]) / "AppData" / "Local" / "nvm"
 NVM_EXE = NVM_DIR / "nvm.exe"
 NODEJS_DIR = NVM_DIR / "nodejs"
-LOCAL_INSTALLER = files("install.bin").joinpath("nvm-setup.exe")  # 本地 bin 中的安装器路径
+LOCAL_INSTALLER = files("popx_tools.install.bin").joinpath("nvm-setup.exe")  # 本地 bin 中的安装器路径
 
 
 def is_nvm_available():
@@ -72,7 +72,7 @@ def install_nvm():
 
     except Exception as fallback_error:
         typer.secho(f"❌ 启动本地安装失败: {fallback_error}", fg=typer.colors.RED)
-        typer.echo("👉 请确认 install/bin/nvm-setup.exe 是否存在。")
+        typer.echo("👉 请确认 popx_tools/install/bin/nvm-setup.exe 是否存在。")
 
 if __name__ == "__main__":
     app()
