@@ -9,7 +9,7 @@ def read_readme():
 # 收集bin目录下的所有文件
 def get_bin_files():
     bin_files = []
-    bin_dir = "install/bin"
+    bin_dir = "popx_tools/install/bin"
     if os.path.exists(bin_dir):
         for file in os.listdir(bin_dir):
             bin_files.append(os.path.join(bin_dir, file))
@@ -17,7 +17,7 @@ def get_bin_files():
 
 setup(
     name="popx-tools",
-    version="1.0.0",
+    version="1.0.1",
     author="Rinkokawa",
     author_email="rin@rinco.cc",  # 请替换为您的邮箱
     description="Popx 环境部署 CLI 工具集",
@@ -27,7 +27,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     package_data={
-        "install": ["bin/*"],
+        "popx_tools.install": ["bin/*"],
     },
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -49,7 +49,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "popx=cli:main",
+            "popx=popx_tools.cli:main",
         ],
     },
     zip_safe=False,

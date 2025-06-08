@@ -64,3 +64,5 @@ Pipfile.lock
 
 # === 本地部署相关 ===
 __pypackages__/
+
+/popx_tools.egg-info/
