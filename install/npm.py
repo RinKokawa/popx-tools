@@ -9,7 +9,8 @@ from pathlib import Path
 
 def install_npm():
     """
-    使用 npmmirror 安装 npm@6.14.12，如果失败则自动下载 .tgz 包并解压。
+    使用 npmmirror 安装 npm@6.14.12，如果失败则自动下载 .tgz 包并解压和安装。
+    成功或失败后都会清理临时文件。
     """
     typer.echo("🔧 尝试使用国内镜像安装 npm@6.14.12...")
 
@@ -53,11 +54,22 @@ def install_npm():
             tar.extractall(path=extract_path)
 
         typer.echo("✅ 解压完成，npm 代码位于:")
-        typer.echo(f"   {extract_path / 'package'}")
+        npm_cli = extract_path / "package" / "bin" / "npm-cli.js"
+        typer.echo(f"   {npm_cli}")
 
-        typer.echo("👉 你可以执行以下命令手动安装:")
-        typer.echo(f"   node {extract_path / 'package' / 'bin' / 'npm-cli.js'} install -g")
+        typer.echo("🚀 正在使用解压版本执行安装命令...")
+        subprocess.run(["node", str(npm_cli), "install", "-g", "npm"], check=True)
+
+        npm_ver = subprocess.check_output(["npm", "-v"], text=True).strip()
+        typer.echo(f"✅ npm 安装完成（通过 fallback），当前版本: {npm_ver}")
 
     except Exception as e:
-        typer.echo(f"❌ 下载或解压失败: {e}")
+        typer.echo(f"❌ 下载或安装失败: {e}")
         typer.echo("👉 手动下载地址：https://registry.npmmirror.com/npm/-/npm-6.14.12.tgz")
+
+    finally:
+        # 清理临时文件
+        if tgz_path.exists():
+            tgz_path.unlink()
+        if extract_path.exists():
+            shutil.rmtree(extract_path, ignore_errors=True)
