@@ -43,8 +43,14 @@ popx install npm
 # 查看卸载选项
 popx uninstall --help
 
-# 卸载所有组件
+# 卸载所有组件（包括清除快捷方式）
 popx uninstall all
+
+# 仅卸载 Node.js 和 npm
+popx uninstall node
+
+# 仅卸载 nvm（并清除快捷方式）
+popx uninstall nvm
 ```
 
 ### 图像处理
