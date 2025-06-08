@@ -1,5 +1,5 @@
 import typer
-from . import laya, popxcmd, node, npm, nvm  # 按需导入模块
+from . import laya, popxcmd, node, npm, nvm  ,uninstall# 按需导入模块
 
 install_app = typer.Typer(help="安装 popx 相关依赖项")
 
@@ -22,10 +22,6 @@ def nvm_local_cmd():
     nvm.install_nvm_local()
 
 
-@install_app.command("popxcmd")
-def popxcmd_cmd():
-    """安装 popx 命令工具"""
-    popxcmd.install_popxcmd()
 
 
 @install_app.command("node")
@@ -34,11 +30,17 @@ def node_cmd():
     node.install_node()
 
 
-@install_app.command("install-npm")
+@install_app.command("npm")
 def npm_cmd():
     """安装 npm"""
     npm.install_npm()
 
+@install_app.command("popxcmd")
+def popxcmd_cmd():
+    """安装 popx 命令工具"""
+    popxcmd.install_popxcmd()
+
+install_app.add_typer(uninstall.app, name="uninstall", help="卸载所有组件")
 
 # 确保 install_app 被模块导出
 __all__ = ["install_app"]
