@@ -1,45 +1,48 @@
-import subprocess
 import typer
+import subprocess
 import os
-from pathlib import Path
 import shutil
+from pathlib import Path
+import zipfile
+
+NODE_VERSION = "10.24.1"
+ZIP_NAME = f"node-v{NODE_VERSION}-win-x64.zip"
+NVM_DIR = Path(os.environ["USERPROFILE"]) / "AppData" / "Local" / "nvm"
+VERSION_DIR = NVM_DIR / f"v{NODE_VERSION}"
+ZIP_PATH = Path(__file__).parent / "bin" / ZIP_NAME
+
+
+def is_node_installed():
+    return shutil.which("node") is not None
+
 
 def install_node():
     """
-    使用 npmmirror 镜像安装 Node.js v10.24.1，并自动切换环境
+    安装本地 Node.js（v10.24.1），并用 nvm 切换
     """
-    typer.echo("🔧 正在使用国内镜像安装 Node.js v10.24.1...")
+    if is_node_installed():
+        typer.echo("✅ 已检测到 node 命令，无需安装。")
+        return
 
-    env = os.environ.copy()
-    env["NVM_NODEJS_ORG_MIRROR"] = "https://npmmirror.com/mirrors/node"
+    if VERSION_DIR.exists() and (VERSION_DIR / "node.exe").exists():
+        typer.echo("🔍 本地版本目录已存在，尝试切换 nvm use...")
+        subprocess.run(f"nvm use {NODE_VERSION}", shell=True)
+        typer.echo("✅ 已完成 node 切换。")
+        return
 
-    try:
-        subprocess.run("nvm install 10.24.1", check=True, shell=True, env=env)
-        subprocess.run("nvm use 10.24.1", check=True, shell=True, env=env)
+    if not ZIP_PATH.exists():
+        typer.secho(f"❌ 缺少本地 Node 安装包: {ZIP_PATH}", fg=typer.colors.RED)
+        return
 
-        # 自动添加 node 路径
-        node_path = shutil.which("node")
-        if node_path:
-            node_dir = os.path.dirname(node_path)
-            if node_dir not in env["PATH"]:
-                env["PATH"] = f"{node_dir};{env['PATH']}"
-            node_ver = subprocess.check_output(["node", "-v"], text=True, env=env).strip()
-            npm_ver = subprocess.check_output(["npm", "-v"], text=True, env=env).strip()
-            typer.echo(f"✅ Node.js 版本: {node_ver}")
-            typer.echo(f"✅ npm 版本: {npm_ver}")
-        else:
-            raise FileNotFoundError
+    typer.echo(f"📦 正在解压 Node 至 {VERSION_DIR}")
+    VERSION_DIR.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(ZIP_PATH, "r") as zip_ref:
+        zip_ref.extractall(VERSION_DIR)
 
-        typer.echo("🎉 Node.js 安装完成并已切换。")
+    typer.echo("🔁 注册版本并切换...")
+    settings_path = NVM_DIR / "settings.txt"
+    with open(settings_path, "a", encoding="utf-8") as f:
+        f.write(f"\n{NODE_VERSION} 64")
 
-    except subprocess.CalledProcessError:
-        typer.echo("❌ Node.js 安装失败，请确认 nvm 是否已正确安装。")
-        typer.echo("👉 可手动尝试：")
-        typer.echo("   set NVM_NODEJS_ORG_MIRROR=https://npmmirror.com/mirrors/node")
-        typer.echo("   nvm install 10.24.1")
-        raise
-
-    except FileNotFoundError:
-        typer.echo("❌ 未找到 node 命令，可能 PATH 未正确更新。")
-        typer.echo("🔎 请确认 `nvm use` 后 node 可用，或尝试重启终端。")
-        raise
+    subprocess.run(f"nvm use {NODE_VERSION}", shell=True)
+    typer.echo("✅ Node 安装完成并切换成功。")

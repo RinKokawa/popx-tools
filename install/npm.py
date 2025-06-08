@@ -1,75 +1,63 @@
-import os
+import typer
 import subprocess
 import shutil
-import requests
 import tarfile
-from tqdm import tqdm
+import os
 from pathlib import Path
+
+NPM_VERSION = "6.14.12"
+TAR_NAME = f"npm-{NPM_VERSION}.tgz"
+TAR_PATH = Path(__file__).parent / "bin" / TAR_NAME
+EXTRACT_PATH = Path(os.environ["TEMP"]) / "npm-local-install"
+
+
+def is_npm_installed():
+    return shutil.which("npm") is not None
+
 
 def install_npm():
     """
-    使用 npmmirror 安装 npm@6.14.12，如果未检测到 npm，则自动下载 .tgz 包手动安装。
+    安装本地 npm（v6.14.12）
     """
-    npm_path = shutil.which("npm")
-    npm_mirror = "https://npmmirror.com/mirrors/npm/"
-    if npm_path:
+    if is_npm_installed():
         try:
-            subprocess.run(
-                ["npm", "install", "-g", "npm@6.14.12", f"--registry={npm_mirror}"],
-                check=True, shell=True
-            )
-            npm_ver = subprocess.check_output(["npm", "-v"], text=True).strip()
-            print(f"✅ npm 已安装，当前版本: {npm_ver}")
-            return
-        except subprocess.CalledProcessError:
-            print("⚠️ 使用 npm 安装失败，尝试使用压缩包手动安装...")
-    else:
-        print("⚠️ 未检测到 npm，开始手动安装流程...")
+            current_ver = subprocess.check_output(["npm", "-v"], text=True).strip()
+            if current_ver == NPM_VERSION:
+                typer.echo(f"✅ 已安装 npm@{NPM_VERSION}")
+                return
+            else:
+                typer.echo(f"🔁 当前版本为 {current_ver}，尝试升级至 {NPM_VERSION}")
+        except Exception:
+            typer.echo("⚠️ 无法判断 npm 版本，继续执行安装。")
 
-    url = f"{npm_mirror}/-/npm-6.14.12.tgz"
-    temp_dir = Path(os.environ["TEMP"])
-    tgz_path = temp_dir / "npm-6.14.12.tgz"
-    extract_path = temp_dir / "package"
+    if not TAR_PATH.exists():
+        typer.secho(f"❌ 缺少本地 npm 安装包: {TAR_PATH}", fg=typer.colors.RED)
+        return
 
-    print("🔽 正在下载 npm 压缩包 (.tgz)...")
-    with requests.get(url, stream=True, timeout=30) as r:
-        r.raise_for_status()
-        total = int(r.headers.get("Content-Length", 0))
-        with open(tgz_path, "wb") as f, tqdm(total=total, unit='B', unit_scale=True, desc="📦 下载进度") as bar:
-            for chunk in r.iter_content(chunk_size=8192):
-                if chunk:
-                    f.write(chunk)
-                    bar.update(len(chunk))
+    if EXTRACT_PATH.exists():
+        shutil.rmtree(EXTRACT_PATH)
+    EXTRACT_PATH.mkdir(parents=True, exist_ok=True)
 
-    print("📂 下载完成，正在解压缩...")
-    with tarfile.open(tgz_path, "r:gz") as tar:
-        tar.extractall(path=temp_dir)
+    typer.echo("📂 正在解压 npm...")
+    with tarfile.open(TAR_PATH, "r:gz") as tar:
+        tar.extractall(path=EXTRACT_PATH)
 
-    cli_path = extract_path / "bin" / "npm-cli.js"
+    cli_path = EXTRACT_PATH / "package" / "bin" / "npm-cli.js"
+    typer.echo("🚀 安装中...")
 
-    print(f"🚀 使用 npm-cli.js 执行安装命令...")
     subprocess.run([
-        "node", str(cli_path), "install", "-g", "npm@6.14.12",
-        f"--registry={npm_mirror}"
+        "node", str(cli_path), "install", "-g", f"npm@{NPM_VERSION}",
+        "--registry=https://registry.npmmirror.com"
     ], check=True)
 
-    # 确认路径并更新 PATH
-    possible_dirs = [
+    # 防止 PowerShell 拦截
+    for npm_root in [
         Path("C:/nvm4w/nodejs"),
-        Path("C:/Users/admin/AppData/Local/nvm/nodejs")
-    ]
+        Path.home() / "AppData/Local/nvm/nodejs"
+    ]:
+        ps1 = npm_root / "npm.ps1"
+        if ps1.exists():
+            ps1.rename(ps1.with_suffix(".ps1.bak"))
+            typer.echo(f"✅ 已禁用 PowerShell 拦截文件: {ps1}")
 
-    for dir_path in possible_dirs:
-        if (dir_path / "npm.cmd").exists():
-            os.environ["PATH"] = f"{dir_path};" + os.environ["PATH"]
-            print(f"✅ 已添加 npm 路径到 PATH: {dir_path}")
-
-            ps1_file = dir_path / "npm.ps1"
-            if ps1_file.exists():
-                ps1_file.rename(ps1_file.with_suffix(".ps1.bak"))
-                print("✅ 已禁用 npm.ps1，避免 PowerShell 拦截")
-            break
-    else:
-        print("⚠️ 未找到 npm.cmd，可能需要手动添加路径或重新安装 Node")
-
-    print("✅ npm 安装完成，请重新打开终端验证 `npm -v`")
+    typer.echo("✅ npm 安装完成，请重新打开终端验证。")
