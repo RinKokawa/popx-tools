@@ -11,6 +11,7 @@ install_app = typer.Typer(help="安装 popx 相关依赖项")
 
 install_app.command()(laya.install_laya)
 install_app.command()(nvm.install_nvm)
+install_app.command("install-nvm-local")(nvm.install_nvm_local)
 install_app.command()(popxcmd.install_popxcmd)
 install_app.command()(node.install_node)
 install_app.command()(npm.install_npm)
