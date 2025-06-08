@@ -43,10 +43,15 @@ def install_npm():
         tar.extractall(path=EXTRACT_PATH)
 
     cli_path = EXTRACT_PATH / "package" / "bin" / "npm-cli.js"
-    typer.echo("🚀 安装中...")
 
+    node_path = shutil.which("node")
+    if not node_path:
+        typer.secho("❌ 未检测到 node 命令，无法继续安装 npm。请先执行 `nvm use 10.24.1`。", fg=typer.colors.RED)
+        return
+
+    typer.echo("🚀 正在安装 npm...")
     subprocess.run([
-        "node", str(cli_path), "install", "-g", f"npm@{NPM_VERSION}",
+        node_path, str(cli_path), "install", "-g", f"npm@{NPM_VERSION}",
         "--registry=https://registry.npmmirror.com"
     ], check=True)
 
