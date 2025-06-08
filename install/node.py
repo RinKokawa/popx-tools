@@ -2,8 +2,9 @@ import typer
 import subprocess
 import os
 import shutil
-from pathlib import Path
 import zipfile
+import winreg
+from pathlib import Path
 
 app = typer.Typer()
 
@@ -22,6 +23,23 @@ def is_node_installed():
 def is_nvm_available():
     return shutil.which("nvm") is not None
 
+
+def write_node_path_env():
+    """
+    将 nvm\nodejs 添加到用户 PATH 环境变量
+    """
+    nodejs_path = str(NVM_DIR / "nodejs")
+    current_path = os.environ.get("PATH", "")
+    if nodejs_path in current_path:
+        typer.echo("✅ PATH 已包含 nvm 的 nodejs 路径。")
+        return
+
+    with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_SET_VALUE) as key:
+        new_path = current_path + ";" + nodejs_path
+        winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, new_path)
+        typer.echo(f"🔧 已添加 {nodejs_path} 到用户 PATH，请重启终端或执行 `refreshenv`。")
+
+
 @app.command("install")
 def install_node():
     """
@@ -34,36 +52,30 @@ def install_node():
         typer.secho("❌ 未检测到 nvm 命令，请先安装 nvm。", fg=typer.colors.RED)
         return
 
-    if is_node_installed():
-        typer.echo("🔍 已检测到 node 命令，但将强制重新安装。")
-
     if not ZIP_PATH.exists():
         typer.secho(f"❌ 缺少本地 Node 安装包: {ZIP_PATH}", fg=typer.colors.RED)
         return
 
-    # 清除已存在的 node 版本目录（软链或旧安装）
+    # 清除旧版本目录
     if VERSION_DIR.exists():
-        typer.echo(f"🧹 正在删除已存在的版本目录 {VERSION_DIR} ...")
+        typer.echo(f"🧹 正在删除旧版本目录 {VERSION_DIR} ...")
         shutil.rmtree(VERSION_DIR)
 
-    # 1. 解压 zip 到临时目录
+    # 解压到临时目录
     temp_extract_dir = NVM_DIR / f"temp-v{NODE_VERSION}"
     if temp_extract_dir.exists():
         shutil.rmtree(temp_extract_dir)
     temp_extract_dir.mkdir(parents=True)
 
-    typer.echo(f"📦 正在解压 Node 至临时目录 {temp_extract_dir}")
+    typer.echo(f"📦 正在解压 Node 至 {temp_extract_dir}")
     with zipfile.ZipFile(ZIP_PATH, "r") as zip_ref:
         zip_ref.extractall(temp_extract_dir)
 
-    # 2. 处理 zip 解压目录结构（是否多包一层）
+    # 判断结构：是否多包一层
     extracted_root = next(temp_extract_dir.iterdir())
-    if extracted_root.is_dir() and "node.exe" in [f.name for f in extracted_root.iterdir()]:
-        source_dir = extracted_root  # 多包一层
-    else:
-        source_dir = temp_extract_dir  # 无包装
+    source_dir = extracted_root if extracted_root.is_dir() else temp_extract_dir
 
-    # 3. 移动到版本目录
+    # 移动文件
     VERSION_DIR.mkdir(parents=True, exist_ok=True)
     for item in source_dir.iterdir():
         target_path = VERSION_DIR / item.name
@@ -73,19 +85,20 @@ def install_node():
             else:
                 target_path.unlink()
         shutil.move(str(item), str(target_path))
-
     shutil.rmtree(temp_extract_dir)
 
-    # 4. 注册并使用
-    typer.echo("🔁 使用 nvm 注册版本并切换...")
+    # 注册并启用
+    typer.echo("🔁 正在注册并切换 Node 版本...")
     subprocess.run(f"nvm install {NODE_VERSION}", shell=True)
     subprocess.run(f"nvm use {NODE_VERSION}", shell=True)
 
-    # 5. 测试结果
-    typer.echo("🧪 验证安装：")
+    write_node_path_env()
+
+    typer.echo("🧪 正在验证...")
     subprocess.run("node -v", shell=True)
     subprocess.run("npm -v", shell=True)
-    typer.echo("✅ Node 安装并激活成功。")
+    typer.echo("✅ Node 安装完成！")
+
 
 if __name__ == "__main__":
     app()
