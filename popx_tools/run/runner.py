@@ -22,8 +22,20 @@ def get_current_node_version() -> Optional[str]:
         lines = output.split('\n')
         
         for line in lines:
-            if '->' in line and 'v10.24.1' in line:
-                return "10.24.1"
+            # 查找带有 * 标记的行，表示当前使用的版本
+            if '*' in line and 'Currently using' in line:
+                # 提取版本号 - 更简单的方法
+                parts = line.split()
+                for i, part in enumerate(parts):
+                    if part == '*':
+                        # 下一个部分应该是版本号
+                        if i + 1 < len(parts):
+                            version = parts[i + 1]
+                            # 确保是版本号格式
+                            if version.replace('.', '').isdigit():
+                                return version
+                        break
+            # 兼容旧格式，查找带有 -> 的行
             elif '->' in line and 'v' in line:
                 # 提取版本号
                 version_start = line.find('v') + 1
@@ -74,8 +86,11 @@ def run_npm_command(command: str) -> bool:
     """运行 npm 命令"""
     try:
         typer.echo(f"🚀 执行: npm run {command}")
+        
+        # 在 Windows 上，nvm 切换版本后需要重新设置环境变量
+        # 使用 PowerShell 的 & 操作符来确保在新的环境中执行
         result = subprocess.run(
-            ["npm", "run", command], 
+            f'powershell -Command "& npm run {command}"', 
             shell=True,
             check=True
         )
