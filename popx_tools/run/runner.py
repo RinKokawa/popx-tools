@@ -59,8 +59,10 @@ def switch_to_node_version(version: str) -> bool:
     """切换到指定的 Node.js 版本"""
     try:
         typer.echo(f"🔄 切换到 Node.js {version}...")
+        
+        # 使用 echo y | 来自动确认 nvm 切换版本时的提示
         result = subprocess.run(
-            ["nvm", "use", version], 
+            f'echo y | nvm use {version}', 
             capture_output=True, 
             text=True, 
             shell=True,
