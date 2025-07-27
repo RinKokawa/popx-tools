@@ -46,6 +46,16 @@ def get_current_node_version() -> Optional[str]:
                 if version_end == -1:
                     version_end = len(line)
                 return line[version_start:version_end]
+            # 新增：查找带有 * 标记的行（新格式）
+            elif '*' in line and 'v' in line:
+                # 提取版本号
+                version_start = line.find('v') + 1
+                version_end = line.find(' ', version_start)
+                if version_end == -1:
+                    version_end = line.find('\t', version_start)
+                if version_end == -1:
+                    version_end = len(line)
+                return line[version_start:version_end]
         
         return None
     except subprocess.CalledProcessError:
@@ -161,6 +171,98 @@ def run_npm_command(command: str) -> bool:
 
 
 def run_command(command: str):
+    """运行指定的命令（ui 或 build），并确保执行完毕后切回 restore_version"""
+    target_version = "10.24.1"
+    restore_version = "22.15.0"
+
+    exit_code = 0
+    original_version = get_current_node_version()
+
+    if original_version is None:
+        typer.secho("❌ 无法确定当前 Node.js 版本，请确保 nvm 已正确安装", fg=typer.colors.RED)
+        exit_code = 1
+    else:
+        typer.echo(f"📋 当前 Node.js 版本: {original_version}")
+        if original_version != target_version:
+            typer.echo(f"⚠️  切换到目标 Node.js 版本: {target_version}")
+            if not switch_to_node_version_with_retry(target_version):
+                typer.secho("❌ 版本切换失败，无法继续执行", fg=typer.colors.RED)
+                exit_code = 1
+
+    # 如果切换成功才运行 npm 命令
+    if exit_code == 0:
+        try:
+            if not run_npm_command(command):
+                exit_code = 1
+            else:
+                typer.secho(f"🎉 {command} 命令执行完成！", fg=typer.colors.GREEN)
+        except Exception as e:
+            typer.secho(f"❌ 执行 {command} 命令时出错: {e}", fg=typer.colors.RED)
+            exit_code = 1
+
+    # === 无论如何都切换回 restore_version ===
+    typer.echo(f"🔄 正在切换回 Node.js {restore_version}...")
+    try:
+        if switch_to_node_version_with_retry(restore_version):
+            typer.secho(f"✅ 已成功切换回 Node.js {restore_version}", fg=typer.colors.GREEN)
+        else:
+            typer.secho(f"❌ 切换回 Node.js {restore_version} 失败，请手动切换", fg=typer.colors.RED)
+            typer.secho(f"请手动运行: nvm use {restore_version}", fg=typer.colors.YELLOW)
+    except Exception as e:
+        typer.secho(f"❌ 恢复版本时出错: {e}", fg=typer.colors.RED)
+        typer.secho(f"请手动运行: nvm use {restore_version}", fg=typer.colors.YELLOW)
+
+    sys.exit(exit_code)
+
+    """运行指定的命令（ui 或 build），并确保执行完毕后切回原版本"""
+    target_version = "10.24.1"
+    restore_version = "22.15.0"
+
+    exit_code = 0  # 退出码，成功为 0，失败为 1
+
+    current_version = get_current_node_version()
+    if current_version is None:
+        typer.secho("❌ 无法确定当前 Node.js 版本，请确保 nvm 已正确安装", fg=typer.colors.RED)
+        exit_code = 1
+        current_version = restore_version  # 防止后续 None 报错
+    else:
+        typer.echo(f"📋 当前 Node.js 版本: {current_version}")
+
+        if current_version != target_version:
+            typer.echo(f"⚠️  需要 Node.js {target_version}，当前版本为 {current_version}")
+            if not switch_to_node_version_with_retry(target_version):
+                typer.secho("❌ 版本切换失败，无法继续执行", fg=typer.colors.RED)
+                exit_code = 1
+
+    # 如果之前出错，跳过 npm 执行
+    if exit_code == 0:
+        try:
+            if not run_npm_command(command):
+                exit_code = 1
+            else:
+                typer.secho(f"🎉 {command} 命令执行完成！", fg=typer.colors.GREEN)
+        except Exception as e:
+            typer.secho(f"❌ 执行 {command} 命令时出错: {e}", fg=typer.colors.RED)
+            exit_code = 1
+
+    # === 无论如何都恢复版本 ===
+    typer.echo(f"🔍 开始恢复 Node.js 版本为 {restore_version} ...")
+    try:
+        if current_version != restore_version:
+            if switch_to_node_version_with_retry(restore_version):
+                typer.secho(f"✅ 已成功切换回 Node.js {restore_version}", fg=typer.colors.GREEN)
+            else:
+                typer.secho(f"❌ 切换回 Node.js {restore_version} 失败，请手动切换", fg=typer.colors.RED)
+                typer.secho(f"请手动运行: nvm use {restore_version}", fg=typer.colors.YELLOW)
+        else:
+            typer.echo(f"✅ 当前已是 Node.js {restore_version}，无需切换")
+    except Exception as e:
+        typer.secho(f"❌ 恢复版本时出错: {e}", fg=typer.colors.RED)
+        typer.secho(f"请手动运行: nvm use {restore_version}", fg=typer.colors.YELLOW)
+
+    # 最终退出
+    sys.exit(exit_code)
+
     """运行指定的命令（ui 或 build）"""
     target_version = "10.24.1"
     restore_version = "22.15.0"
